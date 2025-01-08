@@ -14,11 +14,11 @@ class ClientHandler(
 ) {
     var lastSeen: Long = System.currentTimeMillis() // For timeout tracking
 
-    fun processPacket(data: ByteArray) {
+    fun processPacket(packet: DatagramPacket) {
+        val data = packet.data
         val packetType = data[0].toInt() // First byte is the packet type
+        val info = ClientInfo(packet.address, packet.port)
         when (packetType) {
-            //ClientPacketType.MOVE_PADDLE_LEFT.ordinal -> movePaddle(-5.0)
-            //ClientPacketType.MOVE_PADDLE_RIGHT.ordinal -> movePaddle(5.0)
             else -> println("Unknown packet type from ${clientInfo.address}:${clientInfo.port}")
         }
         lastSeen = System.currentTimeMillis() // Update last seen timestamp

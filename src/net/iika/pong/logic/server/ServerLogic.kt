@@ -9,7 +9,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-class ServerLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, private val powerUpList: CopyOnWriteArrayList<PowerUp>) {
+class ServerLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, private val powerUpList: CopyOnWriteArrayList<PowerUp>, clients: MutableMap<ClientInfo, ClientHandler>) {
     private val collisionListener: GameCollisionListener = GameCollisionListener()
     private var player1Gain: Int = 0
     private var player2Gain: Int = 0

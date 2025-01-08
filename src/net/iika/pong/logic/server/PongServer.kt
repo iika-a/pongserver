@@ -23,9 +23,7 @@ class PongServer(port: Int, serverLogic: ServerLogic) {
                 ClientHandler(clientInfo, socket, serverLogic)
             }
 
-            handler.processPacket(packet.data)
-
-
+            handler.processPacket(packet)
         }
     }
 }
