@@ -176,6 +176,12 @@ class ServerLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, 
         return 0
     }
 
+    fun paddleStateChange(leftOrRight: Boolean, state: Boolean, client: ClientInfo) {
+        when (client) {
+
+        }
+    }
+
     private fun speedUpBall(increment: Double = 0.0) {
         for (ball in gameObjectList.filterIsInstance<Ball>()) {
             ball.ballSpeed += increment
