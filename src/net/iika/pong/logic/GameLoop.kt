@@ -74,7 +74,6 @@ class GameLoop(private val serverLogic: ServerLogic, private val powerUpList: Co
             val startTime = System.nanoTime()
 
             if (++count >= 720) serverLogic.advanceGame(1.0 / targetFPS)
-
             if (count % powerUpCount == 0 && count >= 720) createPowerUp()
 
             val elapsedTime = System.nanoTime() - startTime

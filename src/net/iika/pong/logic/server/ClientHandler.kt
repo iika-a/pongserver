@@ -7,29 +7,25 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.nio.ByteBuffer
 
-class ClientHandler(
-    private val clientInfo: ClientInfo,
-    private val socket: DatagramSocket, // Shared socket for all clients
-    private val serverLogic: ServerLogic
-) {
-    var lastSeen: Long = System.currentTimeMillis() // For timeout tracking
+class ClientHandler(private val clientInfo: ClientInfo, private val socket: DatagramSocket, private val serverLogic: ServerLogic, gameState: GameState) {
+    var lastSeen: Long = System.currentTimeMillis()
 
     fun processPacket(packet: DatagramPacket) {
         val data = packet.data
-        val packetType = data[0].toInt() // First byte is the packet type
+        val packetType = data[0].toInt()
         val info = ClientInfo(packet.address, packet.port)
         when (packetType) {
             else -> println("Unknown packet type from ${clientInfo.address}:${clientInfo.port}")
         }
-        lastSeen = System.currentTimeMillis() // Update last seen timestamp
+        lastSeen = System.currentTimeMillis()
     }
 
     fun sendPacket(type: ServerPacketType, data: ByteArray) {
-        val packetData = byteArrayOf(type.ordinal.toByte()) + data // Serialize the game state
+        val packetData = byteArrayOf(type.ordinal.toByte()) + data
         val packet = DatagramPacket(
             packetData, packetData.size, clientInfo.address, clientInfo.port
         )
-        socket.send(packet) // Send to the client
+        socket.send(packet)
     }
 
     companion object {

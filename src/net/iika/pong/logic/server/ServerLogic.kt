@@ -1,6 +1,8 @@
 package net.iika.pong.logic.server
 
 import net.iika.pong.logic.gameobject.*
+import net.iika.pong.util.BiMap
+import net.iika.pong.util.GameState
 import net.iika.pong.util.gameenum.CollisionEvent
 import net.iika.pong.util.listener.GameCollisionListener
 import java.util.concurrent.CopyOnWriteArrayList
@@ -9,7 +11,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-class ServerLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, private val powerUpList: CopyOnWriteArrayList<PowerUp>, clients: MutableMap<ClientInfo, ClientHandler>) {
+class ServerLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, private val powerUpList: CopyOnWriteArrayList<PowerUp>, clients: BiMap<ClientInfo, ClientHandler>) {
     private val collisionListener: GameCollisionListener = GameCollisionListener()
     private var player1Gain: Int = 0
     private var player2Gain: Int = 0
@@ -55,6 +57,8 @@ class ServerLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, 
             3 -> {
             }
         }
+
+        TODO("BROADCAST GAME STATE")
     }
 
     private fun doCollisionLogic() {

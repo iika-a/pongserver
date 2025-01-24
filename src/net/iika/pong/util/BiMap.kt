@@ -1,6 +1,6 @@
 package net.iika.pong.util
 
-class BijectiveMap<K, V> {
+class BiMap<K, V> {
     private val keyToValue: MutableMap<K, V> = mutableMapOf()
     private val valueToKey: MutableMap<V, K> = mutableMapOf()
 
