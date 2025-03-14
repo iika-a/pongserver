@@ -16,6 +16,10 @@ class BiMap<K, V> {
 
     fun getKey(value: V): K? = valueToKey[value]
 
+    fun getValues(): MutableSet<V> = valueToKey.keys
+
+    fun getKeys(): MutableSet<K> = keyToValue.keys
+
     fun removeByKey(key: K): V? {
         val value = keyToValue.remove(key)
         if (value != null) {
