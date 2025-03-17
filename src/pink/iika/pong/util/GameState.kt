@@ -1,4 +1,4 @@
-package net.iika.pong.util
+package pink.iika.pong.util
 
 data class GameState(
     val paddle1X: Double,

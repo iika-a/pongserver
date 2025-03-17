@@ -1,27 +1,25 @@
-package net.iika.pong.logic.server
+package pink.iika.pong.logic.server
 
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
 
-import net.iika.pong.util.gameenum.ClientPacketType
-import net.iika.pong.util.gameenum.ServerPacketType
-
-const val PORT = 8167
-const val TICK_RATE = 240
+import pink.iika.pong.util.gameenum.ClientPacketType
+import pink.iika.pong.util.gameenum.ServerPacketType
+import pink.iika.pong.util.PongConstants
 
 object GameServer {
     private lateinit var socket: DatagramSocket
     private val clients = mutableListOf<ClientInfo>()
 
     // Game variables
-    private var paddle1X = FIELD_WIDTH / 2 - PADDLE_WIDTH / 2
-    private var paddle2X = FIELD_WIDTH / 2 - PADDLE_WIDTH / 2
-    private var ballX = FIELD_WIDTH / 2 - BALL_DIAMETER / 2
-    private var ballY = FIELD_HEIGHT / 2 - BALL_DIAMETER / 2
-    private var ballVelX = BALL_SPEED * if (Math.random() < 0.5) 1 else -1
-    private var ballVelY = BALL_SPEED * if (Math.random() < 0.5) 1 else -1
+    private var paddle1X = PongConstants.FIELD_WIDTH / 2 - PongConstants.PADDLE_WIDTH / 2
+    private var paddle2X = PongConstants.FIELD_WIDTH / 2 - PongConstants.PADDLE_WIDTH / 2
+    private var ballX = PongConstants.FIELD_WIDTH / 2 - PongConstants.BALL_DIAMETER / 2
+    private var ballY = PongConstants.FIELD_HEIGHT / 2 - PongConstants.BALL_DIAMETER / 2
+    private var ballVelX = PongConstants.BALL_SPEED * if (Math.random() < 0.5) 1 else -1
+    private var ballVelY = PongConstants.BALL_SPEED * if (Math.random() < 0.5) 1 else -1
     private var score1 = 0
     private var score2 = 0
 
@@ -36,8 +34,8 @@ object GameServer {
 
     // Starts the UDP server and the necessary threads.
     fun start() {
-        socket = DatagramSocket(PORT)
-        println("Server started on port $PORT")
+        socket = DatagramSocket(PongConstants.PORT)
+        println("Server started on port ${PongConstants.PORT}")
 
         // Start the receiving thread.
         thread(start = true) { receiveLoop() }
@@ -57,7 +55,7 @@ object GameServer {
 
     // Loop that continuously receives UDP packets.
     private fun receiveLoop() {
-        val buffer = ByteArray(BUFFER_SIZE)
+        val buffer = ByteArray(PongConstants.BUFFER_SIZE)
         while (true) {
             try {
                 val packet = DatagramPacket(buffer, buffer.size)
@@ -124,10 +122,10 @@ object GameServer {
 
     // Main game loop: updates game logic and broadcasts state.
     private fun gameLoop() {
-        val tickInterval = (1000 / TICK_RATE).toLong()
+        val tickInterval = (1000 / PongConstants.TICK_RATE).toLong()
         while (gameRunning) {
             val startTime = System.currentTimeMillis()
-            updateGameState(1.0 / TICK_RATE)
+            updateGameState(1.0 / PongConstants.TICK_RATE)
             broadcastGameTick()
             // Check win condition.
             if (score1 >= 5 || score2 >= 5) {
@@ -145,36 +143,36 @@ object GameServer {
     // Update the game state based on paddle flags and ball physics.
     private fun updateGameState(dt: Double) {
         // Update paddle positions.
-        if (paddle1Left) paddle1X -= PADDLE_SPEED * dt
-        if (paddle1Right) paddle1X += PADDLE_SPEED * dt
-        if (paddle2Left) paddle2X -= PADDLE_SPEED * dt
-        if (paddle2Right) paddle2X += PADDLE_SPEED * dt
-        paddle1X = paddle1X.coerceIn(0.0, FIELD_WIDTH - PADDLE_WIDTH)
-        paddle2X = paddle2X.coerceIn(0.0, FIELD_WIDTH - PADDLE_WIDTH)
+        if (paddle1Left) paddle1X -= PongConstants.PADDLE_SPEED * dt
+        if (paddle1Right) paddle1X += PongConstants.PADDLE_SPEED * dt
+        if (paddle2Left) paddle2X -= PongConstants.PADDLE_SPEED * dt
+        if (paddle2Right) paddle2X += PongConstants.PADDLE_SPEED * dt
+        paddle1X = paddle1X.coerceIn(0.0, PongConstants.FIELD_WIDTH - PongConstants.PADDLE_WIDTH)
+        paddle2X = paddle2X.coerceIn(0.0, PongConstants.FIELD_WIDTH - PongConstants.PADDLE_WIDTH)
 
         // Update ball position.
         ballX += ballVelX * dt
         ballY += ballVelY * dt
 
         // Bounce off left/right walls.
-        if (ballX <= 0 || ballX >= FIELD_WIDTH - BALL_DIAMETER) {
+        if (ballX <= 0 || ballX >= PongConstants.FIELD_WIDTH - PongConstants.BALL_DIAMETER) {
             ballVelX = -ballVelX
-            ballX = ballX.coerceIn(0.0, FIELD_WIDTH - BALL_DIAMETER)
+            ballX = ballX.coerceIn(0.0, PongConstants.FIELD_WIDTH - PongConstants.BALL_DIAMETER)
         }
 
         // Check collision with paddles.
         // For player2 (top paddle)
-        if (ballY <= PADDLE2_Y + 10) { // assuming paddle height ~10
-            if (ballX + BALL_DIAMETER >= paddle2X && ballX <= paddle2X + PADDLE_WIDTH) {
+        if (ballY <= PongConstants.PADDLE2_Y + 10) { // assuming paddle height ~10
+            if (ballX + PongConstants.BALL_DIAMETER >= paddle2X && ballX <= paddle2X + PongConstants.PADDLE_WIDTH) {
                 ballVelY = -ballVelY
-                ballY = PADDLE2_Y + 10.0
+                ballY = PongConstants.PADDLE2_Y + 10.0
             }
         }
         // For player1 (bottom paddle)
-        if (ballY + BALL_DIAMETER >= PADDLE1_Y) {
-            if (ballX + BALL_DIAMETER >= paddle1X && ballX <= paddle1X + PADDLE_WIDTH) {
+        if (ballY + PongConstants.BALL_DIAMETER >= PongConstants.PADDLE1_Y) {
+            if (ballX + PongConstants.BALL_DIAMETER >= paddle1X && ballX <= paddle1X + PongConstants.PADDLE_WIDTH) {
                 ballVelY = -ballVelY
-                ballY = PADDLE1_Y - BALL_DIAMETER
+                ballY = PongConstants.PADDLE1_Y - PongConstants.BALL_DIAMETER
             }
         }
 
@@ -183,7 +181,7 @@ object GameServer {
             score1++
             resetBall()
         }
-        if (ballY > FIELD_HEIGHT) {
+        if (ballY > PongConstants.FIELD_HEIGHT) {
             score2++
             resetBall()
         }
@@ -191,10 +189,10 @@ object GameServer {
 
     // Reset ball to center with a new random direction.
     private fun resetBall() {
-        ballX = FIELD_WIDTH / 2 - BALL_DIAMETER / 2
-        ballY = FIELD_HEIGHT / 2 - BALL_DIAMETER / 2
-        ballVelX = BALL_SPEED * if (Math.random() < 0.5) 1 else -1
-        ballVelY = BALL_SPEED * if (Math.random() < 0.5) 1 else -1
+        ballX = PongConstants.FIELD_WIDTH / 2 - PongConstants.BALL_DIAMETER / 2
+        ballY = PongConstants.FIELD_HEIGHT / 2 - PongConstants.BALL_DIAMETER / 2
+        ballVelX = PongConstants.BALL_SPEED * if (Math.random() < 0.5) 1 else -1
+        ballVelY = PongConstants.BALL_SPEED * if (Math.random() < 0.5) 1 else -1
     }
 
     // Broadcast a packet to all connected clients.
@@ -223,9 +221,9 @@ object GameServer {
         val bb = ByteBuffer.allocate(4 + 6 * 8 + 2 * 4)
         bb.putInt(ServerPacketType.GAME_TICK.ordinal)
         bb.putDouble(paddle1X)
-        bb.putDouble(PADDLE_WIDTH)
+        bb.putDouble(PongConstants.PADDLE_WIDTH)
         bb.putDouble(paddle2X)
-        bb.putDouble(PADDLE_WIDTH)
+        bb.putDouble(PongConstants.PADDLE_WIDTH)
         bb.putDouble(ballX)
         bb.putDouble(ballY)
         bb.putInt(score1)

@@ -1,4 +1,4 @@
-package net.iika.pong.logic.server
+package pink.iika.pong.logic.server
 
 import java.net.InetAddress
 

@@ -1,4 +1,4 @@
-package net.iika.pong.util.gameenum
+package pink.iika.pong.util.gameenum
 
 enum class ServerPacketType {
     ADD_POWER_UP,

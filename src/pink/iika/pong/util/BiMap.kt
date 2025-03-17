@@ -1,4 +1,4 @@
-package net.iika.pong.util
+package pink.iika.pong.util
 
 class BiMap<K, V> {
     private val keyToValue: MutableMap<K, V> = mutableMapOf()
