@@ -4,14 +4,12 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import kotlin.concurrent.thread
 
-import pink.iika.pong.util.PongConstants
-
-class UdpHandler(val port: Int) {
+class ClientHandler(val port: Int) {
     private val socket = DatagramSocket(port)
 
     fun startReceiver(onPacket: (DatagramPacket) -> Unit) {
         thread(start = true) {
-            val buffer = ByteArray(PongConstants.BUFFER_SIZE)
+            val buffer = ByteArray(1024)
             while (true) {
                 try {
                     val packet = DatagramPacket(buffer, buffer.size)
