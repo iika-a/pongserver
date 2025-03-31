@@ -4,7 +4,7 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import kotlin.concurrent.thread
 
-class ClientHandler(val port: Int) {
+class ClientHandler(port: Int) {
     private val socket = DatagramSocket(port)
 
     fun startReceiver(onPacket: (DatagramPacket) -> Unit) {

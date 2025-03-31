@@ -11,6 +11,8 @@ class LogicLoop(private val logic: GameLogic) : Runnable {
 
     fun start() {
         if (!isRunning) {
+            logic.initializeBall()
+            logic.initializePaddles()
             reset()
             isRunning = true
             loopThread.start()
@@ -45,7 +47,8 @@ class LogicLoop(private val logic: GameLogic) : Runnable {
         while (isRunning) {
             val startTime = System.nanoTime()
             val elapsedTime = System.nanoTime() - startTime
-            logic.tick(1.0 / targetFPS)
+            logic.advanceGame(1.0 / targetFPS)
+
 
             val sleepTime = nsPerFrame - elapsedTime
             if (sleepTime > 0) {

@@ -1,6 +1,8 @@
 package pink.iika.pong.logic.server
 
 import pink.iika.pong.util.BiMap
+import pink.iika.pong.util.gameenum.ClientPacketType
+import pink.iika.pong.util.gameenum.ServerPacketType
 import java.net.DatagramPacket
 import java.nio.ByteBuffer
 import java.util.Timer
@@ -26,38 +28,29 @@ class GameServer(private val logic: GameLogic, private val loop: LogicLoop, priv
 
     fun handlePacket(packet: DatagramPacket, clientInfo: ClientInfo) {
         val ordinal = ByteBuffer.wrap(packet.data, 0, packet.length).get().toInt()
-        val type = ClientPacket.entries[ordinal]
+        val type = ClientPacketType.entries[ordinal]
 
         when (type) {
-            ClientPacket.JOIN -> {
+            ClientPacketType.JOIN_LOBBY -> {
                 if (clientInfo in knownClients) {
                     // Send JOIN_ACCEPTED and start retry mechanism with 3 attempts.
                     sendJoinAcceptedWithRetry(clientInfo, 3)
                 } else {
                     handler.broadcast(
-                        byteArrayOf(ServerPacket.JOIN_DENIED.ordinal.toByte()),
+                        byteArrayOf(ServerPacketType.JOIN_DENIED.ordinal.toByte()),
                         mutableListOf(clientInfo)
                     )
                 }
             }
-            ClientPacket.JOIN_ACK -> {
+            ClientPacketType.JOIN_ACCEPTED_ACK -> {
                 acknowledgedClients.add(clientInfo)
                 println("Received JOIN_ACK from $clientInfo")
                 if (acknowledgedClients.size == 2) {
                     println("enablestart ")
-                    handler.broadcast(byteArrayOf(ServerPacket.ENABLE_START.ordinal.toByte()), mutableListOf(knownClients[0]))
+                    handler.broadcast(byteArrayOf(ServerPacketType.ENABLE_START.ordinal.toByte()), mutableListOf(knownClients[0]))
                     logic.setClients(knownClients)
                 }
             }
-            ClientPacket.START -> {loop.start();println("start")}
-            ClientPacket.UP_START -> {logic.startMovement("UP", users.getValue(clientInfo)!!);println("upstart ${users.getValue(clientInfo)}")}
-            ClientPacket.DOWN_START -> logic.startMovement("DOWN", users.getValue(clientInfo)!!)
-            ClientPacket.LEFT_START -> logic.startMovement("LEFT", users.getValue(clientInfo)!!)
-            ClientPacket.RIGHT_START -> logic.startMovement("RIGHT", users.getValue(clientInfo)!!)
-            ClientPacket.UP_END -> {logic.endMovement("UP", users.getValue(clientInfo)!!);println("upend")}
-            ClientPacket.DOWN_END -> logic.endMovement("DOWN", users.getValue(clientInfo)!!)
-            ClientPacket.LEFT_END -> logic.endMovement("LEFT", users.getValue(clientInfo)!!)
-            ClientPacket.RIGHT_END -> logic.endMovement("RIGHT", users.getValue(clientInfo)!!)
         }
     }
 
