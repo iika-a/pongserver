@@ -1,5 +1,6 @@
 package pink.iika.pong.logic.server
 
+@Suppress("unused")
 class LogicLoop(private val logic: GameLogic) : Runnable {
 
     @Volatile
@@ -37,8 +38,7 @@ class LogicLoop(private val logic: GameLogic) : Runnable {
         }
     }
 
-
-    fun reset() {
+    private fun reset() {
         count = 0
         loopThread = Thread(this)
     }

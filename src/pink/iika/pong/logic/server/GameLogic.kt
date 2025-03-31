@@ -14,6 +14,8 @@ import kotlin.random.Random
 class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, private var handler: ClientHandler) {
     private var clients = mutableListOf<ClientInfo>()
     private val collisionListener = GameCollisionListener()
+    private var player1Gain = 0
+    private var player2Gain = 0
 
     fun startMovement(move: String, player: Int) {
         for (paddle in gameObjectList.filterIsInstance<Paddle>()) {
@@ -50,14 +52,18 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
 
         doCollisionLogic()
 
-        val buffer = ByteBuffer.allocate(33).apply {
-            put(ServerPacketType.GAME_TICK.ordinal.toByte())
-            putDouble(gameObjectList[0].xPosition)
-            putDouble(gameObjectList[0].yPosition)
-            putDouble(gameObjectList[1].xPosition)
-            putDouble(gameObjectList[2].xPosition)
+        if (checkForLoss() == 1) {
+            handler.broadcast(byteArrayOf(ServerPacketType.STOP_GAME.ordinal.toByte()), clients)
+        } else {
+            val buffer = ByteBuffer.allocate(33).apply {
+                put(ServerPacketType.GAME_TICK.ordinal.toByte())
+                putDouble(gameObjectList[0].xPosition)
+                putDouble(gameObjectList[0].yPosition)
+                putDouble(gameObjectList[1].xPosition)
+                putDouble(gameObjectList[2].xPosition)
+            }
+            handler.broadcast(buffer.array(), clients)
         }
-        handler.broadcast(buffer.array(), clients)
     }
 
     private fun doCollisionLogic() {
@@ -95,6 +101,33 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
                 }
             }
         }
+    }
+
+    private fun checkForLoss(): Int {
+        var allBallsOffScreen = true
+
+        for (gameObject in gameObjectList) {
+            if (gameObject is Ball) {
+                when {
+                    gameObject.yPosition + gameObject.width < 0 -> {
+                        if (!gameObject.processed) {
+                            player1Gain++
+                        }
+                        gameObjectList.remove(gameObject)
+                    }
+
+                    gameObject.yPosition > 1080 -> {
+                        if (!gameObject.processed) {
+                            player2Gain++
+                        }
+                        gameObjectList.remove(gameObject)
+                    }
+                    else -> allBallsOffScreen = false
+                }
+            }
+        }
+
+        return if (allBallsOffScreen) 1 else 0
     }
 
     fun initializeBall() {

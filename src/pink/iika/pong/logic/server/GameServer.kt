@@ -26,7 +26,7 @@ class GameServer(private val logic: GameLogic, private val loop: LogicLoop, priv
         }
     }
 
-    fun handlePacket(packet: DatagramPacket, clientInfo: ClientInfo) {
+    private fun handlePacket(packet: DatagramPacket, clientInfo: ClientInfo) {
         val ordinal = ByteBuffer.wrap(packet.data, 0, packet.length).get().toInt()
         val type = ClientPacketType.entries[ordinal]
 
@@ -46,11 +46,17 @@ class GameServer(private val logic: GameLogic, private val loop: LogicLoop, priv
                 acknowledgedClients.add(clientInfo)
                 println("Received JOIN_ACK from $clientInfo")
                 if (acknowledgedClients.size == 2) {
-                    println("enablestart ")
                     handler.broadcast(byteArrayOf(ServerPacketType.ENABLE_START.ordinal.toByte()), mutableListOf(knownClients[0]))
                     logic.setClients(knownClients)
                 }
             }
+            ClientPacketType.EXIT_LOBBY -> {}
+            ClientPacketType.PADDLE_LEFT_START -> logic.startMovement("LEFT", users.getValue(clientInfo)!!)
+            ClientPacketType.PADDLE_RIGHT_START -> logic.startMovement("RIGHT", users.getValue(clientInfo)!!)
+            ClientPacketType.PADDLE_LEFT_END -> logic.endMovement("LEFT", users.getValue(clientInfo)!!)
+            ClientPacketType.PADDLE_RIGHT_END -> logic.endMovement("RIGHT", users.getValue(clientInfo)!!)
+            ClientPacketType.START_GAME -> loop.start()
+            ClientPacketType.STOP_GAME_ACK -> loop.stop()
         }
     }
 
@@ -61,7 +67,7 @@ class GameServer(private val logic: GameLogic, private val loop: LogicLoop, priv
             return
         }
         // Send the JOIN_ACCEPTED message to the client.
-        handler.broadcast(byteArrayOf(ServerPacket.JOIN_ACCEPTED.ordinal.toByte()), mutableListOf(client))
+        handler.broadcast(byteArrayOf(ServerPacketType.JOIN_ACCEPTED.ordinal.toByte()), mutableListOf(client))
         println("Sent JOIN_ACCEPTED to $client. Attempts left: $attempts")
 
         // Schedule a retry after 2 seconds if no ACK is received.
