@@ -18,9 +18,13 @@ class GameServer(private val logic: GameLogic, private val loop: LogicLoop, priv
     fun startServer() {
         handler.startReceiver { packet ->
             val clientInfo = ClientInfo(packet.address, packet.port)
+            println("Received packet from ${packet.address}:${packet.port}")
+            println("Known clients: $knownClients")
+
             if (clientInfo !in knownClients && playerNumber != 3) {
                 knownClients.add(clientInfo)
-                users.put(clientInfo, playerNumber++)
+                users.put(clientInfo, playerNumber)
+                playerNumber++
             }
             handlePacket(packet, clientInfo)
         }
@@ -29,6 +33,8 @@ class GameServer(private val logic: GameLogic, private val loop: LogicLoop, priv
     private fun handlePacket(packet: DatagramPacket, clientInfo: ClientInfo) {
         val ordinal = ByteBuffer.wrap(packet.data, 0, packet.length).get().toInt()
         val type = ClientPacketType.entries[ordinal]
+
+        println("Handling ${packet.address}:${packet.port} | ClientInfo=$clientInfo | Is in users: ${users.containsKey(clientInfo)}")
 
         when (type) {
             ClientPacketType.JOIN_LOBBY -> {

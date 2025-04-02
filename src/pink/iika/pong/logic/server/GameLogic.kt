@@ -18,10 +18,11 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
     private var player2Gain = 0
 
     fun startMovement(move: String, player: Int) {
+        println(player)
         for (paddle in gameObjectList.filterIsInstance<Paddle>()) {
             when (move) {
-                "LEFT" -> if (paddle.side != player) paddle.leftPress = true
-                "RIGHT" -> if (paddle.side != player) paddle.leftPress = true
+                "LEFT" -> if (paddle.side == player) paddle.leftPress = true
+                "RIGHT" -> if (paddle.side == player) paddle.rightPress = true
             }
         }
     }
@@ -29,8 +30,8 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
     fun endMovement(move: String, player: Int) {
         for (paddle in gameObjectList.filterIsInstance<Paddle>()) {
             when (move) {
-                "LEFT" -> if (paddle.side != player) paddle.leftPress = false
-                "RIGHT" -> if (paddle.side != player) paddle.leftPress = false
+                "LEFT" -> if (paddle.side == player) paddle.leftPress = false
+                "RIGHT" -> if (paddle.side == player) paddle.rightPress = false
             }
         }
     }
@@ -85,6 +86,10 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
                             when (otherObject.side) {
                                 1 -> {
                                     if (gameObject.yPosition + gameObject.height >= otherObject.yPosition) {
+                                        println(gameObject.yPosition)
+                                        println(gameObject.height)
+                                        println(otherObject.yPosition)
+                                        println(otherObject.paddleHeight)
                                         val intersect = otherObject.yPosition - gameObject.yPosition - gameObject.height
                                         collisionListener.onCollision(CollisionEvent.BALL_PADDLE, gameObject, otherObject, intersect)
                                     }
@@ -98,6 +103,11 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
                             }
                         }
                     }
+                }
+
+                is Paddle -> {
+                    if (gameObject.xPosition <= 0) gameObject.xPosition = 0.0
+                    if (gameObject.xPosition + gameObject.width >= 1920) gameObject.xPosition = 1920 - gameObject.width
                 }
             }
         }
@@ -113,28 +123,33 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
                         if (!gameObject.processed) {
                             player1Gain++
                         }
-                        gameObjectList.remove(gameObject)
+                        //gameObjectList.remove(gameObject)
+                        initializeBall()
                     }
 
-                    gameObject.yPosition > 1080 -> {
+                    gameObject.yPosition > 1041 -> {
                         if (!gameObject.processed) {
                             player2Gain++
                         }
-                        gameObjectList.remove(gameObject)
+                        //gameObjectList.remove(gameObject)
+                        initializeBall()
                     }
                     else -> allBallsOffScreen = false
                 }
             }
         }
 
-        return if (allBallsOffScreen) 1 else 0
+        //return if (allBallsOffScreen) 1 else 0
+        return 0
     }
 
     fun initializeBall() {
         for (gameObject in gameObjectList) {
             if (gameObject is Ball) {
                 gameObject.xPosition = ((1920/4)..(2 * 1920/3)).random().toDouble()
-                gameObject.yPosition = 1080 / 2.0
+                gameObject.yPosition = 1041 / 2.0
+                gameObject.height = 2 * gameObject.ballRadius
+                gameObject.width = 2 * gameObject.ballRadius
 
                 if (gameObject.isTemporary) gameObjectList.remove(gameObject)
 
@@ -152,9 +167,8 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
             paddle.width = 150.0
             paddle.paddleSpeed = 800.0
             paddle.xPosition = 1920 / 2 - paddle.width / 2
-            if (paddle.side == 1) paddle.xPosition = 1920 / 2 - paddle.width / 2
 
-            if (paddle.side == 1) paddle.yPosition = 1080 - paddle.paddleHeight
+            if (paddle.side == 1) paddle.yPosition = 1041 - paddle.paddleHeight
             else paddle.yPosition = 0.0
         }
     }
