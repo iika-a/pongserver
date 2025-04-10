@@ -7,10 +7,13 @@ import java.nio.ByteBuffer
 import java.util.Timer
 import java.util.TimerTask
 import kotlinx.serialization.json.Json
+import java.net.InetAddress
 
 class GameServer(private val handler: ClientHandler) {
     private val rooms = mutableListOf<GameRoom>()
     private val timer = Timer()  // Used for scheduling retries
+    private val lastRoomCreatedAt = mutableMapOf<InetAddress, Long>()
+    private val clientToRoom = mutableMapOf<ClientInfo, GameRoom>()
 
     fun startServer() {
         handler.startReceiver { packet ->
@@ -72,9 +75,36 @@ class GameServer(private val handler: ClientHandler) {
                 handler.broadcast(ServerPacketType.ROOMS, jsonBytes, mutableListOf(clientInfo))
             }
             ClientPacketType.CREATE_ROOM -> {
+                val ip = clientInfo.address
+                val now = System.currentTimeMillis()
+                val last = lastRoomCreatedAt[ip] ?: 0L
+
+                if (now - last < 5000) {
+                    println("Client $clientInfo at $ip is creating rooms too fast.")
+                    handler.broadcast(ServerPacketType.JOIN_DENIED, byteArrayOf(), listOf(clientInfo))
+                    return
+                }
+
                 val dataStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
-                val room = Json.decodeFromString<GameRoom>(dataStr)
+                val room = try {
+                    Json.decodeFromString<GameRoom>(dataStr)
+                } catch (e: Exception) {
+                    println("Invalid room JSON from $clientInfo: ${e.message}")
+                    handler.broadcast(ServerPacketType.JOIN_DENIED, byteArrayOf(), listOf(clientInfo))
+                    return
+                }
+
+                if (room.clients.size > 1) {
+                    println("Client $clientInfo tried to create room with too many clients.")
+                    handler.broadcast(ServerPacketType.JOIN_DENIED, byteArrayOf(), listOf(clientInfo))
+                    return
+                }
+
                 rooms.add(room)
+                clientToRoom[clientInfo] = room
+                lastRoomCreatedAt[ip] = now
+
+                println("Room created by $clientInfo at $ip")
             }
         }
     }
