@@ -1,5 +1,7 @@
 package pink.iika.pong.logic.server
 
+import kotlinx.serialization.Serializable
+
 @Suppress("unused")
 class LogicLoop(private val logic: GameLogic) : Runnable {
 

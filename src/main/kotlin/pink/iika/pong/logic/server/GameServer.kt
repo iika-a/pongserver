@@ -14,6 +14,7 @@ class GameServer(private val handler: ClientHandler) {
     private val timer = Timer()  // Used for scheduling retries
     private val lastRoomCreatedAt = mutableMapOf<InetAddress, Long>()
     private val clientToRoom = mutableMapOf<ClientInfo, GameRoom>()
+    private val acknowledgedClients = mutableListOf<ClientInfo>()
 
     fun startServer() {
         handler.startReceiver { packet ->
@@ -27,12 +28,14 @@ class GameServer(private val handler: ClientHandler) {
         val type = ClientPacketType.entries[ordinal]
 
         when (type) {
-            ClientPacketType.JOIN_LOBBY -> {
-                val dataStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
-                val room = Json.decodeFromString<GameRoom>(dataStr)
+            ClientPacketType.JOIN_ROOM -> {
+                val dataStr = String(packet.data, 1, packet.length - 1, Charsets.UTF_8)
+                val decodedRoom = Json.decodeFromString<GameRoom>(dataStr)
+                val room = rooms.find { it.id == decodedRoom.id } ?: return
                 if (clientInfo !in room.clients && room in rooms) {
-                    room.clients.add(clientInfo)
+                    rooms[rooms.indexOf(room)].clients.add(clientInfo)
                     sendWithRetry(clientInfo, 3, room, ServerPacketType.JOIN_ACCEPTED, ClientPacketType.JOIN_ACCEPTED_ACK)
+                    println(room)
                 }
                 else if (clientInfo in room.clients || room.clients.size == 2 || room !in rooms) handler.broadcast(
                     ServerPacketType.JOIN_DENIED,
@@ -41,27 +44,34 @@ class GameServer(private val handler: ClientHandler) {
                 )
             }
             ClientPacketType.JOIN_ACCEPTED_ACK -> {
+                if (clientInfo !in acknowledgedClients) acknowledgedClients.add(clientInfo)
+                println(acknowledgedClients)
                 for (room in rooms) {
                     if (clientInfo in room.clients) {
-                        room.acknowledge(clientInfo, ClientPacketType.JOIN_ACCEPTED_ACK)
-                    }
-                    if (room.hasAck(room.clients.getOrNull(0) ?: continue, ClientPacketType.JOIN_ACCEPTED_ACK) &&
-                        room.hasAck(room.clients.getOrNull(1) ?: continue, ClientPacketType.JOIN_ACCEPTED_ACK)) {
                         handler.broadcast(
-                            ServerPacketType.ENABLE_START,
-                            byteArrayOf(),
-                            mutableListOf(room.clients[0])
+                            ServerPacketType.ROOM_STATE,
+                            Json.encodeToString(room).toByteArray(),
+                            room.clients
                         )
+
                         room.getLogic().setClients(room.clients)
+                        if (room.clients.size == 2 && room.clients[0] in acknowledgedClients && room.clients[1] in acknowledgedClients)
+                            handler.broadcast(
+                                ServerPacketType.ENABLE_START,
+                                byteArrayOf(),
+                                mutableListOf(room.clients[0])
+                            )
                     }
                 }
             }
 
-            ClientPacketType.EXIT_LOBBY -> {
+            ClientPacketType.EXIT_ROOM -> {
                 val dataStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
-                val room = Json.decodeFromString<GameRoom>(dataStr)
+                val decodedRoom = Json.decodeFromString<GameRoom>(dataStr)
+                val room = rooms.find { it.id == decodedRoom.id } ?: return
                 if (room in rooms && clientInfo in room.clients) room.clients.remove(clientInfo)
                 if (room.clients.size == 0) rooms.remove(room)
+                if (clientInfo in acknowledgedClients) acknowledgedClients.remove(clientInfo)
             }
             ClientPacketType.PADDLE_LEFT_START -> for (room in rooms) if (clientInfo in room.clients) room.getLogic().startMovement("LEFT", room.clients.indexOf(clientInfo))
             ClientPacketType.PADDLE_RIGHT_START -> for (room in rooms) if (clientInfo in room.clients) room.getLogic().startMovement("RIGHT", room.clients.indexOf(clientInfo))
@@ -100,6 +110,8 @@ class GameServer(private val handler: ClientHandler) {
                     return
                 }
 
+                room.initialize(handler)
+                assignRoomID(room)
                 rooms.add(room)
                 clientToRoom[clientInfo] = room
                 lastRoomCreatedAt[ip] = now
@@ -107,6 +119,15 @@ class GameServer(private val handler: ClientHandler) {
                 println("Room created by $clientInfo at $ip")
             }
         }
+    }
+
+    private fun assignRoomID(room: GameRoom) {
+        if (room.id >= 0) return
+
+        val usedIds = rooms.map { it.id }.toSet()
+        var newId = 0
+        while (newId in usedIds) newId++
+        room.id = newId
     }
 
     private fun sendWithRetry(
@@ -126,7 +147,7 @@ class GameServer(private val handler: ClientHandler) {
 
         timer.schedule(object : TimerTask() {
             override fun run() {
-                if (!room.hasAck(client, expectedAck)) {
+                if (client !in acknowledgedClients) {
                     println("No ${expectedAck.name} received from $client, resending ${packetToSend.name}. Attempts left: ${attempts - 1}")
                     sendWithRetry(client, attempts - 1, room, packetToSend, expectedAck)
                 } else {

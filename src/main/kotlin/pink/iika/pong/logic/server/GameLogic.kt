@@ -1,5 +1,6 @@
 package pink.iika.pong.logic.server
 
+import kotlinx.serialization.Serializable
 import pink.iika.pong.logic.gameobject.Ball
 import pink.iika.pong.logic.gameobject.GameObject
 import pink.iika.pong.logic.gameobject.Paddle

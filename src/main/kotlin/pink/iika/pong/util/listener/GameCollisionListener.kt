@@ -1,5 +1,6 @@
 package pink.iika.pong.util.listener
 
+import kotlinx.serialization.Serializable
 import pink.iika.pong.logic.gameobject.GameObject
 import pink.iika.pong.logic.gameobject.Paddle
 import pink.iika.pong.logic.gameobject.PowerUp
@@ -12,6 +13,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
+@Serializable
 class GameCollisionListener: CollisionListener {
     private var direction = 0
 

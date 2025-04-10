@@ -1,11 +1,14 @@
 package pink.iika.pong.logic.server
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import pink.iika.pong.util.gameenum.ServerPacketType
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import kotlin.concurrent.thread
 
 class ClientHandler(port: Int) {
+    @Transient
     private val socket = DatagramSocket(port)
 
     fun startReceiver(onPacket: (DatagramPacket) -> Unit) {

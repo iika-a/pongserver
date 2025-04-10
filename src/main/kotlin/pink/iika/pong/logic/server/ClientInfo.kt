@@ -1,5 +1,7 @@
 package pink.iika.pong.logic.server
 
+import kotlinx.serialization.Serializable
 import java.net.InetAddress
 
-data class ClientInfo(val address: InetAddress, val port: Int)
+@Serializable
+data class ClientInfo(@Serializable(with = InetAddressSerializer::class) val address: InetAddress, val port: Int)
