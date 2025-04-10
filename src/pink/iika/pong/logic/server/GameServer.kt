@@ -32,7 +32,8 @@ class GameServer(private val handler: ClientHandler) {
                     sendWithRetry(clientInfo, 3, room, ServerPacketType.JOIN_ACCEPTED, ClientPacketType.JOIN_ACCEPTED_ACK)
                 }
                 else if (clientInfo in room.clients || room.clients.size == 2 || room !in rooms) handler.broadcast(
-                    byteArrayOf(ServerPacketType.JOIN_DENIED.ordinal.toByte()),
+                    ServerPacketType.JOIN_DENIED,
+                    byteArrayOf(),
                     mutableListOf(clientInfo)
                 )
             }
@@ -44,7 +45,8 @@ class GameServer(private val handler: ClientHandler) {
                     if (room.hasAck(room.clients.getOrNull(0) ?: continue, ClientPacketType.JOIN_ACCEPTED_ACK) &&
                         room.hasAck(room.clients.getOrNull(1) ?: continue, ClientPacketType.JOIN_ACCEPTED_ACK)) {
                         handler.broadcast(
-                            byteArrayOf(ServerPacketType.ENABLE_START.ordinal.toByte()),
+                            ServerPacketType.ENABLE_START,
+                            byteArrayOf(),
                             mutableListOf(room.clients[0])
                         )
                         room.getLogic().setClients(room.clients)
@@ -67,9 +69,7 @@ class GameServer(private val handler: ClientHandler) {
             ClientPacketType.GET_ROOMS -> {
                 val jsonString = Json.encodeToString(rooms)
                 val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
-                val header = byteArrayOf(ServerPacketType.ROOMS.ordinal.toByte())
-                val buffer = header + jsonBytes
-                handler.broadcast(buffer, mutableListOf(clientInfo))
+                handler.broadcast(ServerPacketType.ROOMS, jsonBytes, mutableListOf(clientInfo))
             }
             ClientPacketType.CREATE_ROOM -> {
                 val dataStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
@@ -91,7 +91,7 @@ class GameServer(private val handler: ClientHandler) {
             return
         }
 
-        handler.broadcast(byteArrayOf(packetToSend.ordinal.toByte()), mutableListOf(client))
+        handler.broadcast(packetToSend, byteArrayOf(), mutableListOf(client))
         println("Sent ${packetToSend.name} to $client. Attempts left: $attempts")
 
         timer.schedule(object : TimerTask() {

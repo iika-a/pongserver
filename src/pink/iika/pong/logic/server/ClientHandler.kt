@@ -1,5 +1,6 @@
 package pink.iika.pong.logic.server
 
+import pink.iika.pong.util.gameenum.ServerPacketType
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import kotlin.concurrent.thread
@@ -22,14 +23,16 @@ class ClientHandler(port: Int) {
         }
     }
 
-    fun broadcast(data: ByteArray, clients: List<ClientInfo>) {
+    fun broadcast(header: ServerPacketType, data: ByteArray, clients: List<ClientInfo>) {
         for (client in clients) {
             try {
-                val packet = DatagramPacket(data, data.size, client.address, client.port)
+                val fullPayload = byteArrayOf(header.ordinal.toByte()) + data
+                val packet = DatagramPacket(fullPayload, fullPayload.size, client.address, client.port)
                 socket.send(packet)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
+
 }

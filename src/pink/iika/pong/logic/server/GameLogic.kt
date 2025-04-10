@@ -53,16 +53,15 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
         doCollisionLogic()
 
         if (checkForLoss() == 1) {
-            handler.broadcast(byteArrayOf(ServerPacketType.STOP_GAME.ordinal.toByte()), clients)
+            handler.broadcast(ServerPacketType.STOP_GAME, byteArrayOf(), clients)
         } else {
             val buffer = ByteBuffer.allocate(33).apply {
-                put(ServerPacketType.GAME_TICK.ordinal.toByte())
                 putDouble(gameObjectList[0].xPosition)
                 putDouble(gameObjectList[0].yPosition)
                 putDouble(gameObjectList[1].xPosition)
                 putDouble(gameObjectList[2].xPosition)
             }
-            handler.broadcast(buffer.array(), clients)
+            handler.broadcast(ServerPacketType.GAME_TICK, buffer.array(), clients)
         }
     }
 
