@@ -18,11 +18,10 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
     private var player2Gain = 0
 
     fun startMovement(move: String, player: Int) {
-        println(player)
         for (paddle in gameObjectList.filterIsInstance<Paddle>()) {
             when (move) {
-                "LEFT" -> if (paddle.side == player) paddle.leftPress = true
-                "RIGHT" -> if (paddle.side == player) paddle.rightPress = true
+                "LEFT" -> if (paddle.side == player + 1) paddle.leftPress = true
+                "RIGHT" -> if (paddle.side == player + 1) paddle.rightPress = true
             }
         }
     }
@@ -30,8 +29,8 @@ class GameLogic(private val gameObjectList: CopyOnWriteArrayList<GameObject>, pr
     fun endMovement(move: String, player: Int) {
         for (paddle in gameObjectList.filterIsInstance<Paddle>()) {
             when (move) {
-                "LEFT" -> if (paddle.side == player) paddle.leftPress = false
-                "RIGHT" -> if (paddle.side == player) paddle.rightPress = false
+                "LEFT" -> if (paddle.side == player + 1) paddle.leftPress = false
+                "RIGHT" -> if (paddle.side == player + 1) paddle.rightPress = false
             }
         }
     }

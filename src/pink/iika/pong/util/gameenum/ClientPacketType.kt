@@ -9,5 +9,7 @@ enum class ClientPacketType {
     PADDLE_RIGHT_START,
     PADDLE_RIGHT_END,
     START_GAME,
-    STOP_GAME_ACK
+    STOP_GAME_ACK,
+    GET_ROOMS,
+    CREATE_ROOM
 }

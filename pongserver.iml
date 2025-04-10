@@ -11,5 +11,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json-jvm-1.8.1" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core-jvm-1.8.1" level="project" />
   </component>
 </module>
